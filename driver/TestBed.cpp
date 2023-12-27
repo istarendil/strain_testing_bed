@@ -44,6 +44,7 @@ uint32_t TestBed::dist2Pul(float length){
 void TestBed::calibrateHome(){
   moveCar(150.0);
   setCurrentPosition(0);
+  delay(500);
   moveCar(-1*BIAS_POS);
   setCurrentPosition(0);
   delay(1000);

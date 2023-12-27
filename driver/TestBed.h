@@ -24,7 +24,7 @@
 #define LIM_SW_FRONT  3          // Fontal limit switch: Low active
 
 /* Calibration definitions */
-#define BIAS_POS    1           // Home distance from limit switch in mm
+#define BIAS_POS    2.0           // Home distance from limit switch in mm (float)
 
 
 class TestBed: public AccelStepper{
