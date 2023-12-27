@@ -16,7 +16,7 @@ void setup() {
 void loop() {
   while(!Serial.available()){;}
   selector = Serial.read();
-  Serial.println(selector);
+  Serial.print(selector);
 
   switch(selector){
     /* Calibrate: 'a' */
@@ -33,7 +33,7 @@ void loop() {
     case 'c':
       while(!Serial.available()){;}
       setPoint = Serial.parseFloat();
-      Serial.println(setPoint);
+      Serial.print(setPoint);
       if(setPoint > 0.0) setPoint = 0.0;    
       testBed.moveCar(setPoint);
       break;
@@ -42,12 +42,12 @@ void loop() {
     case 'd':
       while(!Serial.available()){;}
       lowPoint = Serial.parseFloat();
-      Serial.println(lowPoint);
+      Serial.print(lowPoint);
       if(lowPoint > 0.0) lowPoint = 0.0; 
 
       while(!Serial.available()){;}
       highPoint = Serial.parseFloat();
-      Serial.println(highPoint);
+      Serial.print(highPoint);
       if(highPoint > 0.0) highPoint = 0.0; 
 
       do{
