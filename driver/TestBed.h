@@ -20,9 +20,11 @@
 #define STEP        5
 #define DIR         4
 
-
 /* Arduino-Limit Switch default pins definition */
 #define LIM_SW_FRONT  3          // Fontal limit switch: Low active
+
+/* Calibration definitions */
+#define BIAS_POS    1           // Home distance from limit switch in mm
 
 
 class TestBed: public AccelStepper{
@@ -36,10 +38,11 @@ class TestBed: public AccelStepper{
     uint16_t pulsePos;            // Instantaneous position in pulses
     uint16_t ppr;                 // Instantaneous position in pulses
     uint16_t maxSpeed;            // Maximum speed in pulses
-    uint16_t accel;            // Acceleration in pulses
+    uint16_t accel;               // Acceleration in pulses
+    uint8_t grad;                 // Gradient
 
     TestBed(uint8_t = ITF_TYPE, uint8_t = STEP, uint8_t = DIR, uint8_t = LIM_SW_FRONT);
-    void setParams(uint16_t = PPR, uint16_t = MAX_SPD, uint16_t = ACCEL);  // (max speed, acceleration, pin of front switch )
+    void setParams(uint16_t = PPR, uint16_t = MAX_SPD, uint16_t = ACCEL, uint8_t = GRAD);  // (max speed, acceleration, pin of front switch )
     void calibrateHome();
     void moveCar(float);          // Linear displacement in mm: Returns until the position is reached
 
