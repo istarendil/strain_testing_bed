@@ -45,6 +45,7 @@ void TestBed::calibrateHome(){
   moveCar(150.0);
   setCurrentPosition(0);
   delay(500);
+  frontLock = false;
   moveCar(-1*BIAS_POS);
   setCurrentPosition(0);
   delay(1000);
@@ -56,7 +57,7 @@ void TestBed::moveCar(float disp){
   uint32_t rev = dist2Pul(disp);
   moveTo(rev);
   while(currentPosition() != rev){
-    if(frontLock==1){
+    if(frontLock == true){
       stop();
       return;
     }
@@ -64,4 +65,6 @@ void TestBed::moveCar(float disp){
   }
   return;
 }
+
+
 
