@@ -1,17 +1,19 @@
 import tkinter as tk
 from tkinter import Spinbox, Button, Label, StringVar, Text, ttk
+import serial
+import serial.tools.list_ports
 
-class Strain_gui:
+class StrainGui:
     def __init__(self, root):
         self.root = root
         self.root.title("Strain Testing Bed")
-        self.root.geometry("400x300")  # Adjust the window size as needed
-        self.root.resizable(False, False)  # Make the window non-resizable
+        self.root.geometry("400x350")
+        self.root.resizable(False, False)
 
         # Styles
         self.style = ttk.Style()
         self.style.configure("TButton", padding=6, relief="flat", background="#2196F3", foreground="white")
-        self.style.configure("TLabel", padding=6, font=('Helvetica', 12, 'bold'))  # Bold for the first 4 labels
+        self.style.configure("TLabel", padding=6, font=('Helvetica', 12, 'bold'))
         self.style.configure("TProgressbar", thickness=20)
 
         # Labels
@@ -26,61 +28,123 @@ class Strain_gui:
         self.spinbox3 = Spinbox(root, from_=0, to=10)
         self.spinbox4 = Spinbox(root, from_=0, to=10)
 
+        # ComboBox for serial ports
+        self.serial_ports = self.get_serial_ports()
+        self.serial_var = StringVar(value=self.serial_ports[0] if self.serial_ports else "")
+        self.serial_combobox = ttk.Combobox(root, textvariable=self.serial_var, values=self.serial_ports)
+
+        # Button to initiate/terminate serial connection
+        self.connect_button = ttk.Button(root, text="Connect", command=self.toggle_serial_connection)
+
         # Buttons
         self.button1 = ttk.Button(root, text="Calibrate", command=self.on_button1_click)
         self.button2 = ttk.Button(root, text="Move", command=self.on_button2_click)
+        self.button3 = ttk.Button(root, text="Start", command=self.on_start_click)
 
         # Progressbar
         self.progressbar = ttk.Progressbar(root, length=400, mode='indeterminate')
 
-        # Label with text
-        self.label_text1 = ttk.Label(root, text="Cycles: 0")
-        self.label_text1.grid(row=8, column=0, columnspan=2, pady=5)  # Moved below the "Start" button
-
-        # Additional Label with text
-        self.label_text2 = ttk.Label(root, text="Position(mm): 0.0")
-        self.label_text2.grid(row=9, column=0, columnspan=2, pady=5)  # New Label Text
-
         # Configure Grid Layout
-        self.label1.grid(row=0, column=0)
-        self.label2.grid(row=0, column=1)
-        self.spinbox1.grid(row=1, column=0)
-        self.spinbox2.grid(row=1, column=1)
-        self.button1.grid(row=2, column=0, pady=10)
-        self.button2.grid(row=2, column=1, pady=10)
-        self.label3.grid(row=3, column=0)
-        self.label4.grid(row=3, column=1)
-        self.spinbox3.grid(row=4, column=0)
-        self.spinbox4.grid(row=4, column=1)
-        self.progressbar.grid(row=6, column=0, columnspan=2, sticky='ew', pady=5)  # Add some separation
+        self.serial_combobox.grid(row=0, column=0, pady=5)
+        self.connect_button.grid(row=0, column=1, pady=5)
+        self.label1.grid(row=1, column=0)
+        self.label2.grid(row=1, column=1)
+        self.spinbox1.grid(row=2, column=0)
+        self.spinbox2.grid(row=2, column=1)
+        self.button1.grid(row=3, column=0, pady=10)
+        self.button2.grid(row=3, column=1, pady=10)
+        self.label3.grid(row=4, column=0)
+        self.label4.grid(row=4, column=1)
+        self.spinbox3.grid(row=5, column=0)
+        self.spinbox4.grid(row=5, column=1)
+        self.progressbar.grid(row=6, column=0, columnspan=2, sticky='ew', pady=5)
         self.progressbar.start()
-        self.start_button = ttk.Button(root, text="Start", command=self.on_start_click)
-        self.start_button.grid(row=7, column=0, columnspan=2, pady=10, sticky='ew')
-        self.start_state = False  # Variable to track the state of the Start button
+        self.button3.grid(row=7, column=0, columnspan=2, pady=10, sticky='ew')  
 
+        # Labels with text
+        self.label_text1 = ttk.Label(root, text="Cycles: 0")
+        self.label_text1.grid(row=8, column=0, columnspan=2, pady=5)  
+
+        self.label_text2 = ttk.Label(root, text="Position(mm): 0.0")
+        self.label_text2.grid(row=9, column=0, columnspan=2, pady=5)  
+
+        self.start_state = False
+
+
+    def get_serial_ports(self):
+        try:
+            ports = [port.device for port in serial.tools.list_ports.comports() if port.device]
+            return ports
+        except Exception as e:
+            print(f"Error getting serial ports: {e}")
+            return []
+
+    def toggle_serial_connection(self):
+        if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
+            self.stop_serial_connection()
+        else:
+            selected_port = self.serial_var.get()
+            if selected_port:
+                if self.start_serial_connection(selected_port):
+                    print(f"Connected to {selected_port}")
+                else:
+                    print("Error starting serial connection.")
+            else:
+                print("Select a serial port before connecting.")
+
+    def start_serial_connection(self, port):
+        try:
+            self.serial_connection = serial.Serial(port, baudrate=115200, timeout=1)
+            self.connect_button.config(text="Disconnect")
+            return True
+        except Exception as e:
+            print(f"Error starting serial connection: {e}")
+            return False
+
+    def stop_serial_connection(self):
+        try:
+            if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
+                self.serial_connection.close()
+                print("Serial connection closed.")
+                self.connect_button.config(text="Connect")
+        except Exception as e:
+            print(f"Error closing serial connection: {e}")
+    
     def on_button1_click(self):
-        # Action for button 1
-        pass
+        self.calibrate_window = tk.Toplevel(self.root)
+        self.calibrate_window.title("Warning")
+        label_message = ttk.Label(self.calibrate_window, text="Calibration: Be careful to not break the sensor!")
+        label_message.grid(row=0, column=0, padx=10, pady=10)
+        button_ok = ttk.Button(self.calibrate_window, text="OK", command=self.send_char_a)
+        button_ok.grid(row=1, column=0, padx=10, pady=10)
+        
+    def send_char_a(self):
+        if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
+            try:
+                self.serial_connection.write(b'a')  
+                print("Sent 'a' over serial.")
+            except Exception as e:
+                print(f"Error sending 'a' over serial: {e}")
+        else:
+            print("Serial connection not open.")
+
+        # Close the popup window after sending the 'a' character
+        self.root.focus_set()  
+        self.calibrate_window.destroy()
 
     def on_button2_click(self):
-        # Action for button 2
         pass
 
     def on_start_click(self):
-        # Toggle the text between "Start" and "Stop"
         if self.start_state:
-            self.start_button.config(text="Start")
+            self.button3.config(text="Start")
             self.start_state = False
         else:
-            self.start_button.config(text="Stop")
+            self.button3.config(text="Stop")
             self.start_state = True
 
-# Create the main window
+
 root = tk.Tk()
-
-# Create an instance of the interface
-strain_gui = Strain_gui(root)
-
-# Configure the main loop of the interface
+strain_gui = StrainGui(root)
 root.mainloop()
  
