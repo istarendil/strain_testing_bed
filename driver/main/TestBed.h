@@ -25,6 +25,8 @@
 
 /* Calibration definitions */
 #define BIAS_POS    2.0           // Home distance from limit switch in mm (float)
+#define MIN_LIM    -30.0          // Minimum position in mm
+#define MAX_LIM     0.0           // Maximum position in mm
 
 
 class TestBed: public AccelStepper{

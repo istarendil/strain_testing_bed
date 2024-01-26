@@ -2,6 +2,12 @@ import tkinter as tk
 from tkinter import Spinbox, Button, Label, StringVar, Text, ttk
 import serial
 import serial.tools.list_ports
+import time
+
+# Constants
+CALIBRATE = 'a'
+HOME = 'b'
+MOVE = 'c'
 
 class StrainGui:
     def __init__(self, root):
@@ -9,6 +15,8 @@ class StrainGui:
         self.root.title("Strain Testing Bed")
         self.root.geometry("400x350")
         self.root.resizable(False, False)
+
+
 
         # Styles
         self.style = ttk.Style()
@@ -23,23 +31,21 @@ class StrainGui:
         self.label4 = ttk.Label(root, text="Final")
 
         # Spinboxes
-        self.spinbox1 = Spinbox(root, from_=0, to=10)
-        self.spinbox2 = Spinbox(root, from_=0, to=10)
-        self.spinbox3 = Spinbox(root, from_=0, to=10)
-        self.spinbox4 = Spinbox(root, from_=0, to=10)
+        self.spinbox1 = Spinbox(root, from_=0, to=5000, increment=5)
+        self.spinbox2 = Spinbox(root, from_=0, to=100, increment=0.004)
+        self.spinbox3 = Spinbox(root, from_=0, to=100, increment=0.004)
+        self.spinbox4 = Spinbox(root, from_=0, to=100, increment=0.004)
 
         # ComboBox for serial ports
         self.serial_ports = self.get_serial_ports()
         self.serial_var = StringVar(value=self.serial_ports[0] if self.serial_ports else "")
         self.serial_combobox = ttk.Combobox(root, textvariable=self.serial_var, values=self.serial_ports)
 
-        # Button to initiate/terminate serial connection
-        self.connect_button = ttk.Button(root, text="Connect", command=self.toggle_serial_connection)
-
         # Buttons
         self.button1 = ttk.Button(root, text="Calibrate", command=self.on_button1_click)
-        self.button2 = ttk.Button(root, text="Move", command=self.on_button2_click)
+        self.button2 = ttk.Button(root, text="Move", command=self.send_move)
         self.button3 = ttk.Button(root, text="Start", command=self.on_start_click)
+        self.connect_button = ttk.Button(root, text="Connect", command=self.toggle_serial_connection)
 
         # Progressbar
         self.progressbar = ttk.Progressbar(root, length=400, mode='indeterminate')
@@ -115,16 +121,16 @@ class StrainGui:
         self.calibrate_window.title("Warning")
         label_message = ttk.Label(self.calibrate_window, text="Calibration: Be careful to not break the sensor!")
         label_message.grid(row=0, column=0, padx=10, pady=10)
-        button_ok = ttk.Button(self.calibrate_window, text="OK", command=self.send_char_a)
+        button_ok = ttk.Button(self.calibrate_window, text="OK", command=self.send_calibrate)
         button_ok.grid(row=1, column=0, padx=10, pady=10)
         
-    def send_char_a(self):
+    def send_calibrate(self):
         if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
             try:
                 self.serial_connection.write(b'a')  
-                print("Sent 'a' over serial.")
+                print("Calibration requested")
             except Exception as e:
-                print(f"Error sending 'a' over serial: {e}")
+                print(f"Error sending CALIBRATION command: {e}")
         else:
             print("Serial connection not open.")
 
@@ -132,8 +138,18 @@ class StrainGui:
         self.root.focus_set()  
         self.calibrate_window.destroy()
 
-    def on_button2_click(self):
-        pass
+    def send_move(self):
+        if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
+            try:
+                self.serial_connection.write(b'c')  
+                time.sleep(0.02)
+                self.serial_connection.write(self.spinbox2.get().encode('utf-8'))
+                print("Move requested")
+            except Exception as e:
+                print(f"Error sending MOVE command: {e}")
+        else:
+            print("Serial connection not open.")
+
 
     def on_start_click(self):
         if self.start_state:

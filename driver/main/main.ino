@@ -10,6 +10,7 @@ float setPoint,lowPoint, highPoint;
 
 void setup() {
   Serial.begin(115200);
+  Serial.setTimeout(20);
 }
 
 
@@ -32,23 +33,20 @@ void loop() {
     /* Move car: 'c' + set-point in mm (float) */
     case 'c':
       while(!Serial.available()){;}
-      setPoint = Serial.parseFloat();
-      Serial.print(setPoint);
-      if(setPoint > 0.0) setPoint = 0.0;    
+      setPoint = -1*(Serial.readString().toFloat());  // Covert to negative: GUI is sending positive position values
+      setPoint = constrain(setPoint, MIN_LIM, MAX_LIM);
       testBed.moveCar(setPoint);
       break;
 
     /* Oscillate: 'd' +  lowPoint in mm(float) +  highPoint in mm(float) */
     case 'd':
       while(!Serial.available()){;}
-      lowPoint = Serial.parseFloat();
-      Serial.print(lowPoint);
-      if(lowPoint > 0.0) lowPoint = 0.0; 
-
+      lowPoint = -1*(Serial.readString().toFloat());
+      lowPoint = constrain(lowPoint, MIN_LIM, MAX_LIM);
       while(!Serial.available()){;}
-      highPoint = Serial.parseFloat();
-      Serial.print(highPoint);
-      if(highPoint > 0.0) highPoint = 0.0; 
+      highPoint = -1*(Serial.readString().toFloat());
+      highPoint = constrain(highPoint, MIN_LIM, MAX_LIM);
+
 
       do{
         testBed.moveCar(highPoint);
