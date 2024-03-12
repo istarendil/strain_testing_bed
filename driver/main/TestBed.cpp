@@ -67,4 +67,12 @@ void TestBed::moveCar(float disp){
 }
 
 
+void TestBed::waitForCommand() {
+  // Clean the port
+  while (Serial.available() > 0)
+    char dummy = Serial.read(); 
+  // Wait
+  while(!Serial.available()){;}
+}
+
 

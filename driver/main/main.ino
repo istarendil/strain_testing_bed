@@ -6,6 +6,7 @@ TestBed testBed;
 
 /* Program variables */
 uint8_t selector;
+uint16_t cycles;
 float setPoint,lowPoint, highPoint;
 
 void setup() {
@@ -15,9 +16,8 @@ void setup() {
 
 
 void loop() {
-  while(!Serial.available()){;}
+  testBed.waitForCommand();
   selector = Serial.read();
-  Serial.print(selector);
 
   switch(selector){
     /* Calibrate: 'a' */
@@ -32,7 +32,7 @@ void loop() {
 
     /* Move car: 'c' + set-point in mm (float) */
     case 'c':
-      while(!Serial.available()){;}
+      testBed.waitForCommand();
       setPoint = -1*(Serial.readString().toFloat());  // Covert to negative: GUI is sending positive position values
       setPoint = constrain(setPoint, MIN_LIM, MAX_LIM);
       testBed.moveCar(setPoint);
@@ -40,22 +40,37 @@ void loop() {
 
     /* Oscillate: 'd' +  lowPoint in mm(float) +  highPoint in mm(float) */
     case 'd':
-      while(!Serial.available()){;}
+      testBed.waitForCommand();
+      cycles = Serial.readString().toInt();
+      testBed.waitForCommand();
       lowPoint = -1*(Serial.readString().toFloat());
       lowPoint = constrain(lowPoint, MIN_LIM, MAX_LIM);
-      while(!Serial.available()){;}
+      testBed.waitForCommand();
       highPoint = -1*(Serial.readString().toFloat());
       highPoint = constrain(highPoint, MIN_LIM, MAX_LIM);
 
 
+      for(uint16_t i=1; i<=cycles; i++){
+        testBed.moveCar(highPoint);
+        testBed.moveCar(lowPoint);
+        Serial.println(i);
+        Serial.flush();
+        if(Serial.available()){
+          while(Serial.available())
+            Serial.read();          
+          break;
+        }
+      }
+      /*
       do{
         testBed.moveCar(highPoint);
         testBed.moveCar(lowPoint);
       }while(!Serial.available());
+      
 
       while(Serial.available())
         Serial.read();
-            
+      */
       break;
     
     /*IN PROGRESS - Send status*/

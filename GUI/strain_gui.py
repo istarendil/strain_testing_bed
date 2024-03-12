@@ -8,6 +8,7 @@ import time
 CALIBRATE = 'a'
 HOME = 'b'
 MOVE = 'c'
+OSCILLATE = 'd'
 
 class StrainGui:
     def __init__(self, root):
@@ -15,8 +16,6 @@ class StrainGui:
         self.root.title("Strain Testing Bed")
         self.root.geometry("400x350")
         self.root.resizable(False, False)
-
-
 
         # Styles
         self.style = ttk.Style()
@@ -31,7 +30,7 @@ class StrainGui:
         self.label4 = ttk.Label(root, text="Final")
 
         # Spinboxes
-        self.spinbox1 = Spinbox(root, from_=0, to=5000, increment=5)
+        self.spinbox1 = Spinbox(root, from_=1, to=5000, increment=1)
         self.spinbox2 = Spinbox(root, from_=0, to=100, increment=0.004)
         self.spinbox3 = Spinbox(root, from_=0, to=100, increment=0.004)
         self.spinbox4 = Spinbox(root, from_=0, to=100, increment=0.004)
@@ -43,7 +42,7 @@ class StrainGui:
 
         # Buttons
         self.button1 = ttk.Button(root, text="Calibrate", command=self.on_button1_click)
-        self.button2 = ttk.Button(root, text="Move", command=self.send_move)
+        self.button2 = ttk.Button(root, text="Move", command=self.request_translation)
         self.button3 = ttk.Button(root, text="Start", command=self.on_start_click)
         self.connect_button = ttk.Button(root, text="Connect", command=self.toggle_serial_connection)
 
@@ -138,7 +137,7 @@ class StrainGui:
         self.root.focus_set()  
         self.calibrate_window.destroy()
 
-    def send_move(self):
+    def request_translation(self):
         if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
             try:
                 self.serial_connection.write(b'c')  
@@ -153,11 +152,46 @@ class StrainGui:
 
     def on_start_click(self):
         if self.start_state:
-            self.button3.config(text="Start")
-            self.start_state = False
+            self.stop();
         else:
             self.button3.config(text="Stop")
             self.start_state = True
+            self.request_oscillation()
+            self.monitor_oscillation()
+            self.stop()
+
+    def stop(self):
+        self.button3.config(text="Start")
+        self.start_state = False
+
+
+    def request_oscillation(self):
+        if hasattr(self, 'serial_connection') and self.serial_connection.is_open:
+            try:
+                self.serial_connection.write(b'd')  
+                time.sleep(0.02)
+                self.serial_connection.write(self.spinbox1.get().encode('utf-8'))
+                time.sleep(0.02)
+                self.serial_connection.write(self.spinbox3.get().encode('utf-8'))
+                time.sleep(0.02)
+                self.serial_connection.write(self.spinbox4.get().encode('utf-8'))
+                print("Oscillation requested")
+            except Exception as e:
+                print(f"Error sending MOVE command: {e}")
+        else:
+            print("Serial connection not open.")
+
+    def monitor_oscillation(self):
+        self.serial_connection.flushInput()
+        while True:
+            if self.serial_connection.in_waiting > 0:
+                cycle = self.serial_connection.readline().decode('utf-8').strip()
+                print("N°:", cycle)
+                cycle = int(cycle)
+                if cycle >= int(self.spinbox1.get()) or cycle < 0:
+                    return
+
+
 
 
 root = tk.Tk()

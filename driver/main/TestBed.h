@@ -47,6 +47,7 @@ class TestBed: public AccelStepper{
     void setParams(uint16_t = PPR, uint16_t = MAX_SPD, uint16_t = ACCEL, uint8_t = GRAD);  // (max speed, acceleration, pin of front switch )
     void calibrateHome();
     void moveCar(float);          // Linear displacement in mm: Returns until the position is reached
+    void waitForCommand();
 
     void classInterruptHandler(void);
     
